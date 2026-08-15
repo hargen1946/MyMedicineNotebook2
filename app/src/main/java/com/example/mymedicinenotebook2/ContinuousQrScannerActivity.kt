@@ -372,7 +372,7 @@ class ContinuousQrScannerActivity : ComponentActivity() {
                         true
 
                     statusText.text =
-                        "✓ QRコード読み取り成功（${qrDataList.size}件）"
+                        "✓ QR読取成功：${qrDataList.size}件"
 
                     nextButton.visibility =
                         View.VISIBLE
