@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
@@ -124,15 +123,6 @@ class ContinuousQrScannerActivity : ComponentActivity() {
 
                 textSize =
                     20f
-
-                // 端末の横幅に合わせて文字を縮め、一行に収めます
-                setSingleLine(true)
-                setAutoSizeTextTypeUniformWithConfiguration(
-                    14,
-                    20,
-                    1,
-                    TypedValue.COMPLEX_UNIT_SP
-                )
 
                 gravity =
                     Gravity.CENTER
