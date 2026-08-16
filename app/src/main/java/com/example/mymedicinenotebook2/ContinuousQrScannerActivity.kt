@@ -35,6 +35,38 @@ class ContinuousQrScannerActivity : ComponentActivity() {
      */
     private var waitingForChoice =
         false
+    private val returnHomeRunnable =
+        Runnable {
+            setResult(
+                Activity.RESULT_CANCELED
+            )
+            finish()
+        }
+
+    private val readingTimeoutRunnable =
+        Runnable {
+            if (
+                !waitingForChoice &&
+                !isFinishing
+            ) {
+                waitingForChoice =
+                    true
+
+                statusText.text =
+                    "読み取れません。ホームへ戻ります。"
+
+                nextButton.visibility =
+                    View.GONE
+
+                finishButton.visibility =
+                    View.GONE
+
+                statusText .postDelayed(
+                    returnHomeRunnable,
+                    3_000L
+                )
+            }
+        }
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -172,6 +204,7 @@ class ContinuousQrScannerActivity : ComponentActivity() {
 
                     finishButton.visibility =
                         View.GONE
+                    startReadingTimeout()
                 }
             }
 
@@ -257,8 +290,34 @@ class ContinuousQrScannerActivity : ComponentActivity() {
 
         setContentView(root)
     }
+    private fun startReadingTimeout() {
 
+        statusText.removeCallbacks(
+            readingTimeoutRunnable
+        )
+
+        statusText.removeCallbacks(
+            returnHomeRunnable
+        )
+
+        statusText.postDelayed(
+            readingTimeoutRunnable,
+            10_000L
+        )
+    }
+
+    private fun stopReadingTimeout() {
+
+        statusText.removeCallbacks(
+            readingTimeoutRunnable
+        )
+
+        statusText.removeCallbacks(
+            returnHomeRunnable
+        )
+    }
     private fun startContinuousReading() {
+        startReadingTimeout()
 
         barcodeView.decodeContinuous(
             object : BarcodeCallback {
@@ -280,6 +339,7 @@ class ContinuousQrScannerActivity : ComponentActivity() {
                     if (rawText.isBlank()) {
                         return
                     }
+                    stopReadingTimeout()
 
                     if (
                         QrFingerprintStore.contains(
@@ -315,10 +375,9 @@ class ContinuousQrScannerActivity : ComponentActivity() {
                         waitingForChoice =
                             true
 
-                        statusText.text =
-                            "すでに読み取り済みのQRコードを検出しました。\n" +
-                                    "「次のQRコードを読む」または\n" +
-                                    "「読み取り終了」を押してください。"
+
+                            statusText.text =
+                            "同じものです。別のQRコードがある場合は、カメラを向けてオレンジ色のボタン、別のQRコードがない場合は緑色のボタンを押してください。"
 
                         nextButton.visibility =
                             View.VISIBLE
@@ -361,8 +420,28 @@ class ContinuousQrScannerActivity : ComponentActivity() {
                     waitingForChoice =
                         true
 
+
+                    val countText =
+                        qrDataList.size.toString()
+
+                    val message =
+                        "（ ${countText}件読み取り成功 ）"
+
+                    val coloredMessage =
+                        android.text.SpannableString(message)
+
+                    val numberStart =
+                        message.indexOf(countText)
+
+                    coloredMessage.setSpan(
+                        android.text.style.ForegroundColorSpan(Color.RED),
+                        numberStart,
+                        numberStart + countText.length,
+                        android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+
                     statusText.text =
-                        "✓ QRコードを${qrDataList.size}件読み取りました"
+                        coloredMessage
 
                     nextButton.visibility =
                         View.VISIBLE
@@ -463,6 +542,7 @@ class ContinuousQrScannerActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        stopReadingTimeout()
 
         if (
             ::barcodeView
